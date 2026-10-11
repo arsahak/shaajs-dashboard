@@ -15,11 +15,11 @@ const geistMono = Geist_Mono({
 
 const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://dashboard.bongoocean.com"
+  "https://dashboard.shaajs.com"
 ).replace(/\/+$/, "");
-const META_TITLE = "BongoOcean Dashboard";
+const META_TITLE = "Shaajs Dashboard";
 const META_DESCRIPTION =
-  "A World of Products, All in One Place. Secure operations dashboard for managing BongoOcean products, orders, customers, inventory, reviews, messages, and commerce analytics.";
+  "Beauty • Style • Lifestyle. Secure operations dashboard for managing Shaajs products, orders, customers, inventory, reviews, messages, and commerce analytics.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image.png",
         width: 1200,
         height: 630,
-        alt: "BongoOcean — A World of Products, All in One Place.",
+        alt: "Shaajs — Beauty • Style • Lifestyle",
         type: "image/png",
       },
     ],

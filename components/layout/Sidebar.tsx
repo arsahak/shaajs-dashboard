@@ -58,23 +58,23 @@ const Sidebar = () => {
         <Link
           href="/dashboard"
           className="flex flex-shrink-0 items-center transition-opacity hover:opacity-80"
-          aria-label="BongoOcean dashboard"
+          aria-label="Shaajs dashboard"
         >
           {isExpanded ? (
             <Image
-              src="/assets/logo/bongoocean.svg"
-              alt="BongoOcean"
-              width={164}
-              height={41}
+              src="/assets/logo/color-logo.svg"
+              alt="Shaajs"
+              width={168}
+              height={36}
               priority
               className="h-9 w-auto object-contain"
             />
           ) : (
             <Image
-              src="/assets/logo/bongoocean-oo-symbol.svg"
+              src="/assets/logo/colorshape.png"
               alt=""
-              width={44}
-              height={29}
+              width={34}
+              height={36}
               priority
               className="h-9 w-auto max-w-11 object-contain"
             />

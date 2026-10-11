@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://fishmeaqua-backend.vercel.app";
+  process.env.NEXT_PUBLIC_API_URL || "https://api.shaajs.com";
 const AUTH_SECRET =
   process.env.DASHBOARD_AUTH_SECRET ??
   (process.env.AUTH_SECRET

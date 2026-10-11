@@ -2,7 +2,7 @@
 
 import { auth, signIn, signOut } from "@/auth";
 
-const API = `${process.env.NEXT_PUBLIC_API_URL || "https://fishmeaqua-backend.vercel.app"}/api/v1`;
+const API = `${process.env.NEXT_PUBLIC_API_URL || "https://api.shaajs.com"}/api/v1`;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

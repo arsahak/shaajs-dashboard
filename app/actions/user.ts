@@ -70,7 +70,7 @@ async function getAuthContext() {
   return {
     apiUrl:
       process.env.NEXT_PUBLIC_API_URL ||
-      "https://fishmeaqua-backend.vercel.app",
+      "https://api.shaajs.com",
     token,
     userId,
   };
@@ -390,7 +390,7 @@ export async function userSubscriptionByIds(
     });
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "https://fishmeaqua-backend.vercel.app"}/api/subscription/${userId}?${queryParams}`,
+      `${process.env.NEXT_PUBLIC_API_URL || "https://api.shaajs.com"}/api/subscription/${userId}?${queryParams}`,
       {
         method: "GET",
         headers: {
@@ -446,7 +446,7 @@ export async function userSubscriptionById(
     }).toString();
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "https://fishmeaqua-backend.vercel.app"}/api/subscription/${userId}?${queryParams}`,
+      `${process.env.NEXT_PUBLIC_API_URL || "https://api.shaajs.com"}/api/subscription/${userId}?${queryParams}`,
       {
         method: "GET",
         headers: {
@@ -482,7 +482,7 @@ export async function getUserDataTest(
 ): Promise<UserDataResponse<UserProfile>> {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "https://fishmeaqua-backend.vercel.app"}/api/user`,
+      `${process.env.NEXT_PUBLIC_API_URL || "https://api.shaajs.com"}/api/user`,
       {
         method: "GET",
         headers,

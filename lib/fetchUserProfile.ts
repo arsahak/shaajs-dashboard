@@ -1,7 +1,7 @@
 import type { UserFull } from "@/app/actions/user";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://fishmeaqua-backend.vercel.app";
+  process.env.NEXT_PUBLIC_API_URL || "https://api.shaajs.com";
 
 // GET /api/user returns the caller's own company account and already filters
 // is_active=true server-side, so a null return here means "no longer a

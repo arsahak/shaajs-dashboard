@@ -1,5 +1,5 @@
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://fishmeaqua-backend.vercel.app";
+  process.env.NEXT_PUBLIC_API_URL || "https://api.shaajs.com";
 
 export interface AdminProfile {
   id: string;
