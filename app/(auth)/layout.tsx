@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Assistant",
-  description: "Your intelligent workflow partner",
+  title: "Shaajs Dashboard",
+  description:
+    "Beauty • Style • Lifestyle. Secure operations dashboard for managing Shaajs products, orders, customers, inventory, reviews, messages, and commerce analytics.",
 };
 
 export default async function LandingPageLayout({

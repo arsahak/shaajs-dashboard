@@ -1,7 +1,9 @@
 "use client";
 
 import { adminSigninAction } from "@/app/actions/auth";
+import DashboardPreview from "@/components/auth/DashboardPreview";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { BiEnvelope, BiLockAlt, BiLogIn } from "react-icons/bi";
@@ -33,43 +35,43 @@ const SigninPage = () => {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-50">
-      {/* --- Ambient Background --- */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute left-[20%] top-[20%] h-[400px] w-[400px] rounded-full bg-primary/20 blur-[120px]" />
-        <div className="absolute right-[20%] bottom-[20%] h-[400px] w-[400px] rounded-full bg-black/10 blur-[120px]" />
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02]" />
-      </div>
+      {/* --- Dashboard preview background, dimmed so the form stays readable --- */}
+      <DashboardPreview />
+      <div className="absolute inset-0 bg-gray-900/30 backdrop-blur-[3px]" />
 
-      <div className="container relative z-10 mx-auto flex w-full max-w-[420px] flex-col justify-center space-y-6 px-4">
-        {/* --- Header --- */}
-        <div className="flex flex-col items-center space-y-4 text-center">
-          <div className="space-y-1">
-            <motion.h1
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-2xl font-bold tracking-tight text-gray-900"
-            >
-              Welcome Admin
-            </motion.h1>
-            <motion.p
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-sm text-gray-500"
-            >
-              Sign in to manage the platform
-            </motion.p>
-          </div>
-        </div>
-
+      <div className="container relative z-10 mx-auto flex w-full max-w-[500px] flex-col justify-center space-y-6 px-4">
         {/* --- Card --- */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/70 p-8 shadow-2xl backdrop-blur-xl"
+          className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/90 p-8 sm:p-10 shadow-2xl backdrop-blur-xl"
         >
+          {/* --- Header --- */}
+          <div className="mb-6 flex flex-col items-center space-y-4 text-center">
+            <motion.div
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Image
+                src="/assets/logo/color-logo.svg"
+                alt="Shaajs"
+                width={168}
+                height={36}
+                priority
+                className="h-9 w-auto object-contain"
+              />
+            </motion.div>
+            <motion.p
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-sm text-gray-500"
+            >
+              Sign in to manage the platform
+            </motion.p>
+          </div>
           <form action={formAction} className="space-y-5">
             <input type="hidden" name="callbackUrl" value={callbackUrl} />
             {/* Email Field */}
