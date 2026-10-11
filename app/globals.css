@@ -1,0 +1,53 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  /* This app has no dark theme — every component hardcodes light colors
+     (bg-white, text-gray-900, etc). Without this, some browsers/OSes still
+     auto-darken native form controls under a dark system preference, which
+     can make typed input text invisible (near-white on a hardcoded white
+     field). */
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* BongoOcean brand palette. */
+  --color-primary: #013db3;
+  --color-primary-dark: #002b80;
+  --color-secondary: #00c4f3;
+  --color-black: #0a0a0a;
+  --color-white: #ffffff;
+
+  /* shadcn/ui semantic tokens consumed by components/shared/ui/*.
+     Mapped onto the brand palette above — without these, utilities like
+     `text-primary-foreground` or `bg-destructive` silently produce no CSS
+     (Tailwind v4 only generates a utility if its --color-* token exists),
+     so e.g. button text would fall back to an undefined/inherited color
+     instead of the intended one. */
+  --color-primary-foreground: var(--color-white);
+  --color-secondary-foreground: var(--color-black);
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: var(--color-white);
+  --color-accent: var(--color-secondary);
+  --color-accent-foreground: var(--color-black);
+  --color-muted: #f4f7fc;
+  --color-muted-foreground: #5e6470;
+  --color-card: var(--color-white);
+  --color-card-foreground: var(--color-black);
+  --color-input: #d9e2f2;
+  --color-border: #d9e2f2;
+  --color-ring: var(--color-primary);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}

@@ -1,0 +1,91 @@
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "react-hot-toast";
+import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "https://dashboard.bongoocean.com"
+).replace(/\/+$/, "");
+const META_TITLE = "BongoOcean Dashboard";
+const META_DESCRIPTION =
+  "A World of Products, All in One Place. Secure operations dashboard for managing BongoOcean products, orders, customers, inventory, reviews, messages, and commerce analytics.";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  applicationName: META_TITLE,
+  title: {
+    default: META_TITLE,
+    template: `%s | ${META_TITLE}`,
+  },
+  description: META_DESCRIPTION,
+  alternates: {
+    canonical: SITE_URL,
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    url: SITE_URL,
+    siteName: META_TITLE,
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "BongoOcean — A World of Products, All in One Place.",
+        type: "image/png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    images: ["/opengraph-image.png"],
+  },
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false, noimageindex: true },
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {children}
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            duration: 4000,
+            style: { fontSize: "0.875rem", fontWeight: 500 },
+            success: { style: { background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0" } },
+            error: { style: { background: "#fef2f2", color: "#991b1b", border: "1px solid #fecaca" } },
+          }}
+        />
+      </body>
+    </html>
+  );
+}
