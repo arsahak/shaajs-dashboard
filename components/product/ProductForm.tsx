@@ -406,7 +406,7 @@ const ProductForm = ({
                     setForm((f) => ({ ...f, sku: e.target.value }))
                   }
                   className={inputClass}
-                  placeholder="e.g. BOO-OW-1"
+                  placeholder="e.g. SON-10000"
                 />
                 <p className="text-xs text-gray-500">
                   Auto-generated — edit it if you&apos;d rather set your own.
