@@ -70,6 +70,8 @@ export interface Product {
   isActive: boolean;
   isFeatured: boolean;
   isTrending: boolean;
+  isBestSeller?: boolean;
+  isFreeDelivery?: boolean;
   // Auto-expires 30 days after being turned on — newArrivalSetAt is when
   // that happened; null once expired or never set.
   isNewArrival: boolean;
@@ -95,6 +97,8 @@ export interface ListProductsParams {
   isActive?: boolean;
   isFeatured?: boolean;
   isTrending?: boolean;
+  isBestSeller?: boolean;
+  isFreeDelivery?: boolean;
   isNewArrival?: boolean;
 }
 
@@ -144,6 +148,12 @@ export async function listProductsAction(
     }
     if (params.isTrending !== undefined) {
       query.set("isTrending", String(params.isTrending));
+    }
+    if (params.isBestSeller !== undefined) {
+      query.set("isBestSeller", String(params.isBestSeller));
+    }
+    if (params.isFreeDelivery !== undefined) {
+      query.set("isFreeDelivery", String(params.isFreeDelivery));
     }
     if (params.isNewArrival !== undefined) {
       query.set("isNewArrival", String(params.isNewArrival));

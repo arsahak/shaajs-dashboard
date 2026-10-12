@@ -93,6 +93,8 @@ export type ProductFormValues = {
   vendor: string;
   isFeatured: boolean;
   isTrending: boolean;
+  isBestSeller: boolean;
+  isFreeDelivery: boolean;
   isNewArrival: boolean;
 };
 
@@ -111,6 +113,8 @@ export const EMPTY_PRODUCT_FORM: ProductFormValues = {
   vendor: "",
   isFeatured: false,
   isTrending: false,
+  isBestSeller: false,
+  isFreeDelivery: false,
   isNewArrival: false,
 };
 
@@ -177,6 +181,17 @@ const ProductForm = ({
   const categoryOptions = useMemo(
     () => buildCategoryOptions(categories),
     [categories],
+  );
+
+  // A–Z for the brand picker, whatever order the brands are stored in.
+  const brandOptions = useMemo<SearchSelectOption[]>(
+    () =>
+      [...brands]
+        .sort((a, b) =>
+          a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
+        )
+        .map((b) => ({ id: b._id, label: b.name })),
+    [brands],
   );
 
   const [featureFile, setFeatureFile] = useState<File | null>(null);
@@ -330,6 +345,8 @@ const ProductForm = ({
     );
     formData.set("isFeatured", String(form.isFeatured));
     formData.set("isTrending", String(form.isTrending));
+    formData.set("isBestSeller", String(form.isBestSeller));
+    formData.set("isFreeDelivery", String(form.isFreeDelivery));
     formData.set("isNewArrival", String(form.isNewArrival));
     if (featureFile) {
       formData.set("featureImage", featureFile);
@@ -763,20 +780,20 @@ const ProductForm = ({
               </div>
               <div className="space-y-1.5">
                 <label className={labelClass}>Brand</label>
-                <select
+                {/* Searchable like Category. A brand is optional, so the
+                    list starts with "None" and the box can be cleared; with
+                    over a thousand brands only the first matches are shown
+                    until a name is typed. */}
+                <SearchSelect
+                  options={brandOptions}
                   value={form.brand}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, brand: e.target.value }))
-                  }
-                  className={inputClass}
-                >
-                  <option value="">None</option>
-                  {brands.map((b) => (
-                    <option key={b._id} value={b._id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(id) => setForm((f) => ({ ...f, brand: id }))}
+                  placeholder="Search brand…"
+                  emptyText="No brands found."
+                  allowClear
+                  clearLabel="None"
+                  maxVisible={60}
+                />
               </div>
             </div>
           </div>
@@ -946,6 +963,45 @@ const ProductForm = ({
                   </span>
                   <span className="block text-xs text-gray-500">
                     Shown in the trending products section.
+                  </span>
+                </span>
+              </label>
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.isBestSeller}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, isBestSeller: e.target.checked }))
+                  }
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-900">
+                    Best Seller
+                  </span>
+                  <span className="block text-xs text-gray-500">
+                    Shown in the best sellers section.
+                  </span>
+                </span>
+              </label>
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.isFreeDelivery}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      isFreeDelivery: e.target.checked,
+                    }))
+                  }
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-900">
+                    Free Delivery
+                  </span>
+                  <span className="block text-xs text-gray-500">
+                    Marks this product as sold with free delivery.
                   </span>
                 </span>
               </label>

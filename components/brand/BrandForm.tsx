@@ -8,6 +8,7 @@ export type BrandFormValues = {
   name: string;
   description: string;
   isActive: boolean;
+  isTopBrand: boolean;
   sortOrder: string;
 };
 
@@ -15,6 +16,7 @@ export const EMPTY_BRAND_FORM: BrandFormValues = {
   name: "",
   description: "",
   isActive: true,
+  isTopBrand: false,
   sortOrder: "0",
 };
 
@@ -63,6 +65,7 @@ const BrandForm = ({
     formData.set("name", form.name);
     formData.set("description", form.description);
     formData.set("isActive", String(form.isActive));
+    formData.set("isTopBrand", String(form.isTopBrand));
     formData.set("sortOrder", form.sortOrder);
     if (logoFile) formData.set("logo", logoFile);
     onSubmit(formData);
@@ -162,6 +165,27 @@ const BrandForm = ({
     </div>
   );
 
+  const topBrandField = (
+    <label className="flex cursor-pointer items-start gap-3">
+      <input
+        type="checkbox"
+        checked={form.isTopBrand}
+        onChange={(e) =>
+          setForm((f) => ({ ...f, isTopBrand: e.target.checked }))
+        }
+        className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-black"
+      />
+      <span>
+        <span className="block text-sm font-medium text-gray-900">
+          Top brand
+        </span>
+        <span className="block text-xs text-gray-500">
+          Feature this brand among the store&apos;s top brands.
+        </span>
+      </span>
+    </label>
+  );
+
   const actions = (
     <>
       <button
@@ -210,7 +234,10 @@ const BrandForm = ({
               <h3 className="mb-4 text-sm font-semibold text-gray-900">
                 Organization
               </h3>
-              <div className="space-y-4">{sortOrderField}</div>
+              <div className="space-y-4">
+                {sortOrderField}
+                {topBrandField}
+              </div>
             </div>
             <div className="rounded border border-gray-200 p-5">
               <h3 className="mb-4 text-sm font-semibold text-gray-900">
@@ -234,6 +261,7 @@ const BrandForm = ({
       {nameField}
       {descriptionField}
       {sortOrderField}
+      {topBrandField}
       {activeField}
       <div className="flex justify-end gap-3 pt-2">{actions}</div>
     </form>

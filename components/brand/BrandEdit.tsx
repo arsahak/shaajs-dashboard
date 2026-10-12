@@ -57,6 +57,7 @@ const BrandEdit = () => {
         name: brand.name,
         description: brand.description || "",
         isActive: brand.isActive,
+        isTopBrand: Boolean(brand.isTopBrand),
         sortOrder: String(brand.sortOrder),
       }
     : undefined;

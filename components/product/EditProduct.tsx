@@ -117,6 +117,8 @@ const EditProduct = () => {
         vendor: vendorId || "",
         isFeatured: product.isFeatured,
         isTrending: product.isTrending,
+        isBestSeller: Boolean(product.isBestSeller),
+        isFreeDelivery: Boolean(product.isFreeDelivery),
         isNewArrival: product.isNewArrival,
       }
     : undefined;

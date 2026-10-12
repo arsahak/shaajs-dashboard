@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { BiCheck, BiSearch } from "react-icons/bi";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { BiCheck, BiSearch, BiX } from "react-icons/bi";
 
 export interface SearchSelectOption {
   id: string;
@@ -20,6 +20,18 @@ interface SearchSelectProps {
   placeholder?: string;
   emptyText?: string;
   className?: string;
+  /**
+   * For an optional field: adds a first row that picks nothing (labelled
+   * `clearLabel`) and an × in the box to clear the current choice.
+   */
+  allowClear?: boolean;
+  clearLabel?: string;
+  /**
+   * For very long lists (a thousand brands): only this many matches are put
+   * on screen at a time, with a note to keep typing — so opening the list
+   * and typing in it stay instant.
+   */
+  maxVisible?: number;
 }
 
 const inputClass =
@@ -32,6 +44,9 @@ const SearchSelect = ({
   placeholder = "Search…",
   emptyText = "No results found.",
   className = "",
+  allowClear = false,
+  clearLabel = "None",
+  maxVisible,
 }: SearchSelectProps) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -54,9 +69,20 @@ const SearchSelect = ({
   const selectedOption = options.find((o) => o.id === value);
   const selectedLabel = selectedOption?.fullPath || selectedOption?.label || "";
 
-  const filtered = options.filter((o) =>
-    o.label.toLowerCase().includes(query.toLowerCase()),
-  );
+  const filtered = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return term
+      ? options.filter((o) => o.label.toLowerCase().includes(term))
+      : options;
+  }, [options, query]);
+  const visible = maxVisible ? filtered.slice(0, maxVisible) : filtered;
+  const hiddenCount = filtered.length - visible.length;
+
+  const choose = (id: string) => {
+    onChange(id);
+    setOpen(false);
+    setQuery("");
+  };
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -72,27 +98,64 @@ const SearchSelect = ({
             setOpen(true);
             setQuery("");
           }}
+          // Enter takes the first match; Escape closes without choosing.
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setOpen(false);
+              setQuery("");
+              e.currentTarget.blur();
+            } else if (e.key === "Enter" && open) {
+              e.preventDefault();
+              if (visible[0]) {
+                choose(visible[0].id);
+                e.currentTarget.blur();
+              }
+            }
+          }}
           placeholder={selectedLabel || placeholder}
-          className={`${inputClass} pl-8`}
+          className={`${inputClass} pl-8 ${allowClear && value ? "pr-8" : ""}`}
         />
+        {allowClear && value && (
+          <button
+            type="button"
+            aria-label="Clear"
+            title="Clear"
+            // mousedown, so it runs before the box takes focus and opens.
+            onMouseDown={(e) => {
+              e.preventDefault();
+              choose("");
+            }}
+            className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+          >
+            <BiX size={16} />
+          </button>
+        )}
       </div>
       {open && (
         <div className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+          {allowClear && !query.trim() && (
+            <button
+              type="button"
+              onClick={() => choose("")}
+              className={`flex w-full items-center gap-1.5 px-3 py-2 text-left text-sm hover:bg-gray-50 ${
+                value ? "text-gray-500" : "bg-primary/5 font-medium text-primary-dark"
+              }`}
+            >
+              <span className="truncate">{clearLabel}</span>
+              {!value && <BiCheck size={14} className="ml-auto shrink-0" />}
+            </button>
+          )}
           {filtered.length === 0 ? (
             <p className="px-3 py-2 text-xs text-gray-400">{emptyText}</p>
           ) : (
-            filtered.map((o) => {
+            visible.map((o) => {
               const depth = o.depth ?? 0;
               const selected = o.id === value;
               return (
                 <button
                   key={o.id}
                   type="button"
-                  onClick={() => {
-                    onChange(o.id);
-                    setOpen(false);
-                    setQuery("");
-                  }}
+                  onClick={() => choose(o.id)}
                   style={{ paddingLeft: 12 + depth * 18 }}
                   className={`flex w-full items-center gap-1.5 py-2 pr-3 text-left text-sm hover:bg-gray-50 ${
                     selected
@@ -114,6 +177,12 @@ const SearchSelect = ({
                 </button>
               );
             })
+          )}
+          {hiddenCount > 0 && (
+            <p className="border-t border-gray-100 px-3 py-2 text-xs text-gray-400">
+              {hiddenCount.toLocaleString()} more — keep typing to narrow the
+              list.
+            </p>
           )}
         </div>
       )}

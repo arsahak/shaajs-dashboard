@@ -13,6 +13,10 @@ export interface Brand {
   description?: string;
   logo?: string;
   isActive: boolean;
+  /** One of the storefront's featured "Top Brands". */
+  isTopBrand?: boolean;
+  /** Active products sold under this brand (from the list endpoint). */
+  productCount?: number;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
