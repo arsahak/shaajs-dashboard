@@ -20,6 +20,14 @@ export interface ProductBrandRef {
   slug: string;
 }
 
+/** A Best For option on a product, with the group it belongs to. */
+export interface ProductBestForRef {
+  _id: string;
+  name: string;
+  slug: string;
+  parent?: { _id: string; name: string; slug: string } | string | null;
+}
+
 export interface ProductVendorRef {
   _id: string;
   name: string;
@@ -44,6 +52,9 @@ export interface Product {
   // a bare id string on the create/update response (those don't populate).
   category: string | ProductCategoryRef;
   brand?: string | ProductBrandRef | null;
+  // The Best For options the product is tagged with — populated on GET, bare
+  // id strings on the create/update response, absent on older products.
+  bestFor?: (string | ProductBestForRef)[];
   // null/unset means this is the shop's own product.
   vendor?: string | ProductVendorRef | null;
   shortDescription?: string;

@@ -1,5 +1,6 @@
 "use client";
 
+import { BestFor } from "@/app/actions/bestFor";
 import { Brand } from "@/app/actions/brand";
 import { Category } from "@/app/actions/category";
 import { ProductUnit } from "@/app/actions/product";
@@ -16,14 +17,19 @@ import SearchSelect, {
   SearchSelectOption,
 } from "@/components/shared/SearchSelect";
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import {
+  BiCheck,
+  BiChevronDown,
   BiCloudUpload,
   BiImageAdd,
   BiImages,
   BiLogoYoutube,
+  BiSearch,
   BiStore,
+  BiTargetLock,
   BiVideo,
   BiX,
 } from "react-icons/bi";
@@ -83,6 +89,8 @@ export type ProductFormValues = {
   sku: string;
   category: string;
   brand: string;
+  /** Ids of the Best For options the product is tagged with. */
+  bestFor: string[];
   shortDescription: string;
   overview: string;
   price: string;
@@ -103,6 +111,7 @@ export const EMPTY_PRODUCT_FORM: ProductFormValues = {
   sku: "",
   category: "",
   brand: "",
+  bestFor: [],
   shortDescription: "",
   overview: "",
   price: "",
@@ -132,6 +141,8 @@ const UNIT_LABELS: Record<ProductUnit, string> = {
 interface ProductFormProps {
   categories: Category[];
   brands: Brand[];
+  /** The whole Best For list — groups and the options in them. */
+  bestFor?: BestFor[];
   vendors: Vendor[];
   initialValues?: ProductFormValues;
   initialFeatureImage?: string;
@@ -155,6 +166,7 @@ const labelClass =
 const ProductForm = ({
   categories,
   brands,
+  bestFor = [],
   vendors,
   initialValues = EMPTY_PRODUCT_FORM,
   initialFeatureImage = "",
@@ -182,6 +194,82 @@ const ProductForm = ({
     () => buildCategoryOptions(categories),
     [categories],
   );
+
+  const [bestForSearch, setBestForSearch] = useState("");
+  // The groups opened by hand. The rest stay folded, so a long list is a
+  // column of group names rather than hundreds of options.
+  const [openBestForGroups, setOpenBestForGroups] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  // The Best For options on offer, under the group each belongs to. Inactive
+  // groups and options are left out — unless the product already has one,
+  // which stays so it can be seen and unticked.
+  const bestForGroups = useMemo(() => {
+    const picked = new Set(form.bestFor);
+    return bestFor
+      .filter((entry) => !entry.parent)
+      .map((group) => {
+        const options = bestFor.filter(
+          (entry) =>
+            entry.parent === group._id &&
+            ((group.isActive && entry.isActive) || picked.has(entry._id)),
+        );
+        return {
+          group,
+          options,
+          pickedCount: options.filter((option) => picked.has(option._id))
+            .length,
+        };
+      })
+      .filter(({ options }) => options.length > 0);
+  }, [bestFor, form.bestFor]);
+
+  // With a search, only what matches: a group whose own name matches keeps
+  // all its options, any other keeps just the options that match.
+  const visibleBestForGroups = useMemo(() => {
+    const query = bestForSearch.trim().toLowerCase();
+    if (!query) return bestForGroups;
+    return bestForGroups
+      .map((entry) =>
+        entry.group.name.toLowerCase().includes(query)
+          ? entry
+          : {
+              ...entry,
+              options: entry.options.filter((option) =>
+                option.name.toLowerCase().includes(query),
+              ),
+            },
+      )
+      .filter(({ options }) => options.length > 0);
+  }, [bestForGroups, bestForSearch]);
+
+  // What is picked, in the list's order, each with its group's name.
+  const pickedBestFor = useMemo(
+    () =>
+      bestForGroups.flatMap(({ group, options }) =>
+        options
+          .filter((option) => form.bestFor.includes(option._id))
+          .map((option) => ({ option, groupName: group.name })),
+      ),
+    [bestForGroups, form.bestFor],
+  );
+
+  const toggleBestFor = (id: string) =>
+    setForm((f) => ({
+      ...f,
+      bestFor: f.bestFor.includes(id)
+        ? f.bestFor.filter((picked) => picked !== id)
+        : [...f.bestFor, id],
+    }));
+
+  const toggleBestForGroup = (id: string) =>
+    setOpenBestForGroups((open) => {
+      const next = new Set(open);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   // A–Z for the brand picker, whatever order the brands are stored in.
   const brandOptions = useMemo<SearchSelectOption[]>(
@@ -332,6 +420,8 @@ const ProductForm = ({
     formData.set("sku", form.sku);
     formData.set("category", form.category);
     formData.set("brand", form.brand);
+    // Always sent, so unticking everything clears them.
+    formData.set("bestFor", JSON.stringify(form.bestFor));
     formData.set("shortDescription", form.shortDescription);
     formData.set("overview", form.overview);
     formData.set("price", form.price);
@@ -427,8 +517,15 @@ const ProductForm = ({
                   onChange={(html) =>
                     setForm((f) => ({ ...f, shortDescription: html }))
                   }
-                  placeholder="A brief one- or two-line summary shown on product cards"
+                  placeholder="A brief summary shown beside the price on the product page"
+                  // A short summary is text only — no images or videos.
+                  variant="summary"
+                  height={220}
                 />
+                <p className="text-xs text-gray-500">
+                  Text only — no images or videos. It is shown on the product
+                  page the way it looks here.
+                </p>
               </div>
               <div className="space-y-1.5">
                 <label className={labelClass}>Overview</label>
@@ -438,7 +535,15 @@ const ProductForm = ({
                     setForm((f) => ({ ...f, overview: html }))
                   }
                   placeholder="Full product description shown on the product detail page"
+                  height={420}
                 />
+                <p className="text-xs text-gray-500">
+                  In both: select text to change its font, size or colour, and
+                  pick &quot;Title&quot; from the first dropdown for a heading.
+                  The Icon and Emoji buttons put one before a title or a line —
+                  click it in the text to make it smaller or bigger. Drag the
+                  toolbar sideways for more tools.
+                </p>
               </div>
             </div>
           </div>
@@ -796,6 +901,145 @@ const ProductForm = ({
                 />
               </div>
             </div>
+          </div>
+
+          <div className="rounded border border-gray-200 p-5">
+            <div className="mb-1 flex items-center justify-between gap-3">
+              <h3 className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+                <BiTargetLock size={16} className="text-gray-400" />
+                Best For
+                {form.bestFor.length > 0 && (
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                    {form.bestFor.length}
+                  </span>
+                )}
+              </h3>
+              <Link
+                href="/products/best-for"
+                target="_blank"
+                className="text-xs font-medium text-gray-500 underline-offset-2 hover:text-gray-900 hover:underline"
+              >
+                Manage list
+              </Link>
+            </div>
+            <p className="mb-4 text-xs text-gray-500">
+              Who or what this product suits. Pick as many as apply.
+            </p>
+            {bestForGroups.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-gray-200 px-3 py-4 text-center text-xs text-gray-500">
+                No Best For options yet — add some from &quot;Manage
+                list&quot;.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {/* What is picked so far — click one to take it off. */}
+                {pickedBestFor.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {pickedBestFor.map(({ option, groupName }) => (
+                      <button
+                        key={option._id}
+                        type="button"
+                        onClick={() => toggleBestFor(option._id)}
+                        title={`Remove ${groupName}: ${option.name}`}
+                        className="flex items-center gap-1 rounded-full bg-black py-1 pl-2.5 pr-1.5 text-xs font-medium text-white hover:bg-black/80"
+                      >
+                        <span className="text-white/60">{groupName}:</span>
+                        {option.name}
+                        <BiX size={14} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="relative">
+                  <BiSearch
+                    size={16}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+                  <input
+                    type="search"
+                    value={bestForSearch}
+                    onChange={(e) => setBestForSearch(e.target.value)}
+                    // Enter here shouldn't submit the product.
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") e.preventDefault();
+                    }}
+                    placeholder="Search — dry, men, eid…"
+                    className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
+                  />
+                </div>
+
+                {/* The groups, folded until opened; a search opens whatever
+                    it finds. */}
+                <div className="max-h-96 divide-y divide-gray-100 overflow-y-auto rounded-lg border border-gray-200">
+                  {visibleBestForGroups.length === 0 ? (
+                    <p className="px-3 py-4 text-center text-xs text-gray-500">
+                      Nothing matches &quot;{bestForSearch.trim()}&quot;.
+                    </p>
+                  ) : (
+                    visibleBestForGroups.map(
+                      ({ group, options, pickedCount }) => {
+                        const open =
+                          bestForSearch.trim() !== "" ||
+                          openBestForGroups.has(group._id);
+                        return (
+                          <div key={group._id}>
+                            <button
+                              type="button"
+                              aria-expanded={open}
+                              onClick={() => toggleBestForGroup(group._id)}
+                              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-gray-50"
+                            >
+                              <span className="flex min-w-0 items-center gap-2">
+                                <span className="truncate text-sm font-medium text-gray-800">
+                                  {group.name}
+                                </span>
+                                {pickedCount > 0 && (
+                                  <span className="rounded-full bg-black px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                                    {pickedCount}
+                                  </span>
+                                )}
+                              </span>
+                              <BiChevronDown
+                                size={18}
+                                className={`shrink-0 text-gray-400 transition-transform ${
+                                  open ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                            {open && (
+                              <div className="flex flex-wrap gap-1.5 px-3 pb-3 pt-1">
+                                {options.map((option) => {
+                                  const picked = form.bestFor.includes(
+                                    option._id,
+                                  );
+                                  return (
+                                    <button
+                                      key={option._id}
+                                      type="button"
+                                      aria-pressed={picked}
+                                      onClick={() => toggleBestFor(option._id)}
+                                      className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                                        picked
+                                          ? "border-black bg-black text-white"
+                                          : "border-gray-200 text-gray-700 hover:border-gray-400"
+                                      }`}
+                                    >
+                                      {picked && <BiCheck size={14} />}
+                                      {option.name}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      },
+                    )
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="rounded border border-gray-200 p-5">

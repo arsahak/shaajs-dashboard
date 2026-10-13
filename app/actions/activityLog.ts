@@ -12,6 +12,7 @@ export type ActivityModuleName =
   | "product"
   | "category"
   | "brand"
+  | "bestFor"
   | "supplier"
   | "stock"
   | "order"

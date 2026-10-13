@@ -51,3 +51,38 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* The rich-text editor's one-row toolbar scrolls sideways when its tools
+   don't fit. Its scrollbar is a thin, pale line rather than the browser's
+   full-size one. */
+.tox .tox-toolbar--scrolling::-webkit-scrollbar {
+  height: 2px;
+}
+/* The track is pulled in from both ends, which leaves a short bar in the
+   middle of the toolbar instead of one running its whole width. */
+.tox .tox-toolbar--scrolling::-webkit-scrollbar-track {
+  background: transparent;
+  margin-inline: clamp(24px, 20vw, 400px);
+}
+.tox .tox-toolbar--scrolling::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 9999px;
+}
+.tox .tox-toolbar--scrolling::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+/* Firefox, which has no ::-webkit-scrollbar. */
+@supports not selector(::-webkit-scrollbar) {
+  .tox .tox-toolbar--scrolling {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+  }
+}
+
+/* The editor's font dropdown — the one menu with a search box — is kept
+   short: about seven fonts at a time, the rest a scroll or a search away. */
+.tox .tox-menu:has(.tox-menu__searcher) {
+  max-height: 280px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}

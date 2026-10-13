@@ -1,5 +1,6 @@
 "use client";
 
+import { BestFor, listBestForAction } from "@/app/actions/bestFor";
 import { Brand, listBrandsAction } from "@/app/actions/brand";
 import { Category, listCategoriesAction } from "@/app/actions/category";
 import { createProductAction, getNextSkuAction } from "@/app/actions/product";
@@ -15,6 +16,7 @@ const AddProduct = () => {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [bestFor, setBestFor] = useState<BestFor[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [suggestedSku, setSuggestedSku] = useState("");
   const [loading, setLoading] = useState(true);
@@ -22,12 +24,13 @@ const AddProduct = () => {
 
   useEffect(() => {
     (async () => {
-      const [categoriesRes, brandsRes, vendorsRes, skuRes] =
+      const [categoriesRes, brandsRes, vendorsRes, skuRes, bestForRes] =
         await Promise.all([
           listCategoriesAction(),
           listBrandsAction(),
           listVendorsAction(),
           getNextSkuAction(),
+          listBestForAction(),
         ]);
       if (categoriesRes.ok && categoriesRes.data) {
         setCategories(categoriesRes.data);
@@ -39,6 +42,7 @@ const AddProduct = () => {
         setVendors(vendorsRes.data);
       }
       if (skuRes.ok && skuRes.data) setSuggestedSku(skuRes.data.sku);
+      if (bestForRes.ok && bestForRes.data) setBestFor(bestForRes.data);
       setLoading(false);
     })();
   }, []);
@@ -121,6 +125,7 @@ const AddProduct = () => {
         <ProductForm
           categories={categories}
           brands={brands}
+          bestFor={bestFor}
           vendors={vendors}
           initialValues={{ ...EMPTY_PRODUCT_FORM, sku: suggestedSku }}
           submitting={submitting}

@@ -2,6 +2,7 @@
 
 import {
   Product,
+  ProductBestForRef,
   ProductCategoryRef,
   deleteProductAction,
   getProductAction,
@@ -9,12 +10,22 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import {
+  DESCRIPTION_FONTS,
+  descriptionFontStylesheet,
+  descriptionFontsUsed,
+} from "@/lib/descriptionFonts";
+import { renderDescriptionIcons } from "@/lib/descriptionIcons";
+import {
+  DESCRIPTION_CONTENT_STYLESHEET,
+  DESCRIPTION_CONTENT_STYLESHEET_ID,
+  descriptionContentClass,
+} from "@/lib/descriptionStyles";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import {
   BiArrowBack,
   BiBox,
-  BiCheck,
   BiPencil,
   BiTrash,
 } from "react-icons/bi";
@@ -198,10 +209,24 @@ const ProductDetails = () => {
         )
       : null;
 
-  const features = (product.shortDescription || "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const shortDescription = renderDescriptionIcons(
+    (product.shortDescription || "").trim(),
+  );
+  const overview = renderDescriptionIcons((product.overview || "").trim());
+  // Bare ids (a product that wasn't fetched with them filled in) have no
+  // name to show.
+  const bestForOptions = (product.bestFor ?? []).filter(
+    (option): option is ProductBestForRef => typeof option !== "string",
+  );
+  // Loads the storefront's own fonts and any other the descriptions are set
+  // in, so they read here as they do on the storefront.
+  const descriptionFontsHref = descriptionFontStylesheet([
+    ...new Set([
+      ...DESCRIPTION_FONTS.filter((font) => font.siteVariable),
+      ...descriptionFontsUsed(shortDescription),
+      ...descriptionFontsUsed(overview),
+    ]),
+  ]);
 
   return (
     <div className="flex flex-col gap-6 bg-gray-50 min-h-screen">
@@ -234,6 +259,19 @@ const ProductDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* The descriptions' styles and fonts — React lifts both into <head>. */}
+      <style
+        href={DESCRIPTION_CONTENT_STYLESHEET_ID}
+        precedence="default"
+      >
+        {DESCRIPTION_CONTENT_STYLESHEET}
+      </style>
+      <link
+        rel="stylesheet"
+        href={descriptionFontsHref}
+        precedence="default"
+      />
 
       {/* Product overview: gallery left, info right */}
       <div className="rounded border border-gray-200 bg-white p-6">
@@ -349,26 +387,37 @@ const ProductDetails = () => {
               </p>
             </div>
 
-            {/* Features (short description) */}
-            {features.length > 0 && (
+            {/* Short description — titles, icons and text as written */}
+            {shortDescription && (
               <div className="mt-5">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Key Features
+                  Short Description
                 </h3>
-                <ul className="mt-2.5 space-y-2">
-                  {features.map((line, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2 text-sm text-gray-700"
+                <div
+                  className={`mt-2.5 ${descriptionContentClass("summary")}`}
+                  dangerouslySetInnerHTML={{ __html: shortDescription }}
+                />
+              </div>
+            )}
+
+            {/* Best For — the options the product is tagged with */}
+            {bestForOptions.length > 0 && (
+              <div className="mt-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Best For
+                </h3>
+                <div className="mt-2.5 flex flex-wrap gap-2">
+                  {bestForOptions.map((option) => (
+                    <span
+                      key={option._id}
+                      className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
                     >
-                      <BiCheck
-                        size={18}
-                        className="mt-0.5 shrink-0 text-primary-dark"
-                      />
-                      {line}
-                    </li>
+                      {typeof option.parent === "object" && option.parent
+                        ? `${option.parent.name}: ${option.name}`
+                        : option.name}
+                    </span>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
 
@@ -407,14 +456,14 @@ const ProductDetails = () => {
       </div>
 
       {/* Overview */}
-      {product.overview && (
+      {overview && (
         <div className="rounded border border-gray-200 bg-white p-6">
           <h3 className="mb-4 text-sm font-semibold text-gray-900">
             Overview
           </h3>
           <div
-            className="prose prose-sm max-w-none text-gray-700"
-            dangerouslySetInnerHTML={{ __html: product.overview }}
+            className={descriptionContentClass("overview")}
+            dangerouslySetInnerHTML={{ __html: overview }}
           />
         </div>
       )}

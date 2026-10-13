@@ -1,5 +1,6 @@
 "use client";
 
+import { BestFor, listBestForAction } from "@/app/actions/bestFor";
 import { Brand, listBrandsAction } from "@/app/actions/brand";
 import { Category, listCategoriesAction } from "@/app/actions/category";
 import {
@@ -25,6 +26,7 @@ const EditProduct = () => {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [bestFor, setBestFor] = useState<BestFor[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,12 +41,13 @@ const EditProduct = () => {
     }
 
     (async () => {
-      const [productRes, categoriesRes, brandsRes, vendorsRes] =
+      const [productRes, categoriesRes, brandsRes, vendorsRes, bestForRes] =
         await Promise.all([
           getProductAction(id),
           listCategoriesAction(),
           listBrandsAction(),
           listVendorsAction(),
+          listBestForAction(),
         ]);
 
       if (productRes.ok && productRes.data) {
@@ -61,6 +64,9 @@ const EditProduct = () => {
       }
       if (vendorsRes.ok && vendorsRes.data) {
         setVendors(vendorsRes.data);
+      }
+      if (bestForRes.ok && bestForRes.data) {
+        setBestFor(bestForRes.data);
       }
       setLoading(false);
     })();
@@ -107,6 +113,10 @@ const EditProduct = () => {
         sku: product.sku,
         category: categoryId || "",
         brand: brandId || "",
+        // Populated objects on a fetched product; ids are all the form needs.
+        bestFor: (product.bestFor ?? []).map((option) =>
+          typeof option === "string" ? option : option._id,
+        ),
         shortDescription: product.shortDescription || "",
         overview: product.overview || "",
         price: String(product.price),
@@ -182,6 +192,7 @@ const EditProduct = () => {
         <ProductForm
           categories={categories}
           brands={brands}
+          bestFor={bestFor}
           vendors={vendors}
           initialValues={initialValues}
           initialFeatureImage={product.featureImage || ""}

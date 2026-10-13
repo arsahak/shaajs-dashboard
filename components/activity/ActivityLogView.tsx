@@ -26,6 +26,7 @@ const MODULE_OPTIONS: { value: ActivityModuleName | ""; label: string }[] = [
   { value: "product", label: "Product" },
   { value: "category", label: "Category" },
   { value: "brand", label: "Brand" },
+  { value: "bestFor", label: "Best For" },
   { value: "supplier", label: "Supplier" },
   { value: "stock", label: "Stock" },
   { value: "order", label: "Order" },
