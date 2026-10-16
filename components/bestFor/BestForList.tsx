@@ -4,6 +4,7 @@ import {
   BestFor,
   deleteBestForAction,
   listBestForAction,
+  updateBestForAction,
 } from "@/app/actions/bestFor";
 import BestForIcon from "@/components/bestFor/BestForIcon";
 import { bestForGradient } from "@/lib/bestForColors";
@@ -16,14 +17,60 @@ import {
   BiChevronDown,
   BiListUl,
   BiPencil,
+  BiPin,
   BiPlus,
   BiSearch,
+  BiSolidPin,
   BiTargetLock,
   BiTrash,
 } from "react-icons/bi";
 
 const ADD_HREF = "/products/best-for/add";
 const editHref = (id: string) => `/products/best-for/edit?id=${id}`;
+
+// Whether the list shows only the pinned entries — a way of looking at the
+// list, so it is kept in this browser. The pins themselves are saved on the
+// entries: the storefront shows only what is pinned.
+const PINNED_ONLY_KEY = "bestFor:pinnedOnly";
+
+const readStored = <T,>(key: string, fallback: T): T => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw === null ? fallback : (JSON.parse(raw) as T);
+  } catch {
+    return fallback;
+  }
+};
+
+const store = (key: string, value: unknown) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Storage blocked (private window): the switch resets on reload.
+  }
+};
+
+const PinButton = ({
+  pinned,
+  label,
+  onClick,
+}: {
+  pinned: boolean;
+  label: string;
+  onClick: () => void;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-pressed={pinned}
+    title={pinned ? `Unpin ${label}` : `Pin ${label}`}
+    className={`p-1 transition-colors ${
+      pinned ? "text-primary" : "text-gray-400 hover:text-primary"
+    }`}
+  >
+    {pinned ? <BiSolidPin size={18} /> : <BiPin size={18} />}
+  </button>
+);
 
 const StatusBadge = ({ active }: { active: boolean }) => (
   <span
@@ -70,6 +117,45 @@ const BestForList = () => {
   // The groups opened by hand; the rest show only their header, so a long
   // list stays a page of group names. A search opens whatever it finds.
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
+  const [pinnedOnly, setPinnedOnly] = useState(false);
+
+  // Read after the first render, so the server's HTML and the browser's
+  // first render match.
+  useEffect(() => {
+    setPinnedOnly(readStored(PINNED_ONLY_KEY, false));
+  }, []);
+
+  const pinned = useMemo(
+    () =>
+      new Set(entries.filter((entry) => entry.isPinned).map((entry) => entry._id)),
+    [entries],
+  );
+
+  const setEntryPinned = (id: string, isPinned: boolean) =>
+    setEntries((current) =>
+      current.map((entry) =>
+        entry._id === id ? { ...entry, isPinned } : entry,
+      ),
+    );
+
+  // Shown as pinned at once, then saved; put back if the save fails.
+  const togglePin = async (entry: BestFor) => {
+    const next = !entry.isPinned;
+    setEntryPinned(entry._id, next);
+    const formData = new FormData();
+    formData.append("isPinned", String(next));
+    const res = await updateBestForAction(entry._id, formData);
+    if (!res.ok) {
+      setEntryPinned(entry._id, !next);
+      toast.error(res.error || "Failed to update the pin");
+    }
+  };
+
+  const togglePinnedOnly = () =>
+    setPinnedOnly((current) => {
+      store(PINNED_ONLY_KEY, !current);
+      return !current;
+    });
 
   const toggleGroup = (id: string) =>
     setOpenGroups((open) => {
@@ -96,28 +182,30 @@ const BestForList = () => {
 
   // Groups in their saved order, each with its options. With a search, a
   // group stays if its own name matches (showing all its options) or if any
-  // of its options do (showing just those).
+  // of its options do (showing just those). "Pinned only" narrows the same
+  // way: a pinned group keeps its options, any other group keeps just its
+  // pinned ones.
   const groups = useMemo(() => {
     const query = search.trim().toLowerCase();
     return entries
       .filter((entry) => !entry.parent)
-      .map((group) => {
-        const options = entries.filter((entry) => entry.parent === group._id);
+      .flatMap((group) => {
+        const all = entries.filter((entry) => entry.parent === group._id);
         const groupMatches = group.name.toLowerCase().includes(query);
-        return {
-          group,
-          total: options.length,
-          options:
-            !query || groupMatches
-              ? options
-              : options.filter((option) =>
-                  option.name.toLowerCase().includes(query),
-                ),
-          matches: !query || groupMatches,
-        };
-      })
-      .filter(({ matches, options }) => matches || options.length > 0);
-  }, [entries, search]);
+        let options =
+          !query || groupMatches
+            ? all
+            : all.filter((option) => option.name.toLowerCase().includes(query));
+        let keep = !query || groupMatches || options.length > 0;
+        if (pinnedOnly && !pinned.has(group._id)) {
+          options = options.filter((option) => pinned.has(option._id));
+          keep = options.length > 0;
+        }
+        return keep ? [{ group, total: all.length, options }] : [];
+      });
+  }, [entries, search, pinnedOnly, pinned]);
+
+  const pinnedCount = pinned.size;
 
   const groupCount = entries.filter((entry) => !entry.parent).length;
   const optionCount = entries.length - groupCount;
@@ -221,8 +309,8 @@ const BestForList = () => {
         ))}
       </div>
 
-      {/* Search */}
-      <div className="rounded border border-gray-200 bg-white px-6 py-4">
+      {/* Search, and the switch to show only what is pinned */}
+      <div className="flex flex-col gap-3 rounded border border-gray-200 bg-white px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full max-w-xs">
           <BiSearch
             size={18}
@@ -236,6 +324,22 @@ const BestForList = () => {
             className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
           />
         </div>
+        <button
+          type="button"
+          onClick={togglePinnedOnly}
+          aria-pressed={pinnedOnly}
+          className={`flex w-fit items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+            pinnedOnly
+              ? "border-primary bg-primary/10 text-primary-dark"
+              : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          {pinnedOnly ? <BiSolidPin size={16} /> : <BiPin size={16} />}
+          Pinned only
+          <span className="rounded-full bg-white px-2 py-0.5 text-xs tabular-nums text-gray-600 ring-1 ring-gray-200">
+            {pinnedCount}
+          </span>
+        </button>
       </div>
 
       {/* Groups */}
@@ -254,12 +358,20 @@ const BestForList = () => {
             <BiTargetLock size={24} />
           </div>
           <h3 className="text-sm font-semibold text-gray-900">
-            {groupCount === 0 ? "Nothing here yet" : "No matches"}
+            {groupCount === 0
+              ? "Nothing here yet"
+              : pinnedOnly && pinnedCount === 0
+                ? "Nothing pinned yet"
+                : "No matches"}
           </h3>
           <p className="mt-1 text-sm text-gray-500">
             {groupCount === 0
               ? "Start with a group — Skin Type, Concern, For — then add its options."
-              : "No group or option matches your search."}
+              : pinnedOnly && pinnedCount === 0
+                ? "Pin a group or an option with its pin button, or turn off Pinned only to see everything."
+                : pinnedOnly
+                  ? "No pinned group or option matches your search."
+                  : "No group or option matches your search."}
           </p>
           {groupCount === 0 && (
             <Link
@@ -273,7 +385,12 @@ const BestForList = () => {
         </div>
       ) : (
         groups.map(({ group, options, total }) => {
-          const open = search.trim() !== "" || openGroups.has(group._id);
+          // A group shown only for its pinned options opens on its own —
+          // otherwise "Pinned only" would hide what was pinned.
+          const open =
+            search.trim() !== "" ||
+            openGroups.has(group._id) ||
+            (pinnedOnly && !pinned.has(group._id));
           return (
           <div
             key={group._id}
@@ -281,9 +398,9 @@ const BestForList = () => {
           >
             {/* The group — click its name to show or hide its options */}
             <div
-              className={`flex flex-wrap items-center justify-between gap-3 bg-gray-50 px-6 py-4 ${
-                open ? "border-b border-gray-200" : ""
-              }`}
+              className={`flex flex-wrap items-center justify-between gap-3 px-6 py-4 ${
+                pinned.has(group._id) ? "bg-primary/10" : "bg-gray-50"
+              } ${open ? "border-b border-gray-200" : ""}`}
             >
               <button
                 type="button"
@@ -314,6 +431,11 @@ const BestForList = () => {
                   <BiPlus size={16} />
                   Add Option
                 </Link>
+                <PinButton
+                  pinned={pinned.has(group._id)}
+                  label="group"
+                  onClick={() => void togglePin(group)}
+                />
                 <Link
                   href={editHref(group._id)}
                   className="text-gray-500 hover:text-gray-900 transition-colors p-1"
@@ -347,6 +469,9 @@ const BestForList = () => {
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         Products
                       </th>
+                      <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Pin
+                      </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         Sort Order
                       </th>
@@ -360,7 +485,14 @@ const BestForList = () => {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {options.map((option) => (
-                      <tr key={option._id} className="hover:bg-gray-50">
+                      <tr
+                        key={option._id}
+                        className={
+                          pinned.has(option._id)
+                            ? "bg-primary/5 hover:bg-primary/10"
+                            : "hover:bg-gray-50"
+                        }
+                      >
                         <td className="px-6 py-3.5">
                           <div className="flex items-center gap-3">
                             <CardThumb entry={option} />
@@ -378,6 +510,13 @@ const BestForList = () => {
                           <div className="text-sm tabular-nums text-gray-700">
                             {option.productCount ?? 0}
                           </div>
+                        </td>
+                        <td className="px-6 py-3.5 whitespace-nowrap text-center">
+                          <PinButton
+                            pinned={pinned.has(option._id)}
+                            label="option"
+                            onClick={() => void togglePin(option)}
+                          />
                         </td>
                         <td className="px-6 py-3.5 whitespace-nowrap">
                           <div className="text-sm tabular-nums text-gray-700">

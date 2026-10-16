@@ -27,6 +27,11 @@ export interface BestFor {
   /** The card's background gradient: two #rrggbb colors, start then end. */
   colors?: string[];
   isActive: boolean;
+  /**
+   * Shown on the storefront: a pinned option, or every option of a pinned
+   * group.
+   */
+  isPinned?: boolean;
   sortOrder: number;
   /** Active products tagged with this option (from the list endpoint). */
   productCount?: number;

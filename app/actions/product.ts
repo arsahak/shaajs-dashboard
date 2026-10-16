@@ -100,11 +100,25 @@ export interface ProductListResult {
   totalPages: number;
 }
 
+// The orders the backend's product list accepts ("default" is the
+// catalog's own sort order, newest first among equals).
+export type ProductSort =
+  | "default"
+  | "newest"
+  | "oldest"
+  | "name"
+  | "name-desc"
+  | "price-low"
+  | "price-high"
+  | "stock-low"
+  | "stock-high";
+
 export interface ListProductsParams {
   page?: number;
   limit?: number;
   category?: string;
   search?: string;
+  sort?: ProductSort;
   isActive?: boolean;
   isFeatured?: boolean;
   isTrending?: boolean;
@@ -151,6 +165,9 @@ export async function listProductsAction(
     if (params.limit) query.set("limit", String(params.limit));
     if (params.category) query.set("category", params.category);
     if (params.search) query.set("search", params.search);
+    if (params.sort && params.sort !== "default") {
+      query.set("sort", params.sort);
+    }
     if (params.isActive !== undefined) {
       query.set("isActive", String(params.isActive));
     }
