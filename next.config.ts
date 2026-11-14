@@ -39,7 +39,7 @@ const nextConfig: NextConfig = {
       // NextAuth and breaking them.
       {
         source: "/api/:path((?!auth/).*)",
-        destination: "http://localhost:8000/api/:path", // Proxy to Backend
+        destination: `${process.env.BACKEND_INTERNAL_URL || "http://localhost:8000"}/api/:path`, // Proxy to Backend
       },
     ];
   },
